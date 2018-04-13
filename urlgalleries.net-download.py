@@ -3,11 +3,14 @@
 import sys
 import os
 import argparse
+import glob
 from urllib.parse import urlparse, parse_qs, urljoin
 
 import requests
 from bs4 import BeautifulSoup
 from parse import compile
+
+force = False
 
 url = 'http://moggy.urlgalleries.net/blog_gallery.php?id=4873870&g=Isabella_C_in_Diavgia'
 dir = 'Isabella C in Diavgia'
@@ -52,11 +55,12 @@ def get_img_src(url):
 
     return urljoin(baseurl, img_src)
 
-def save_file(url, file):
+def save_file(url, file_name):
     r = requests.get(url, allow_redirects=True)
     r.raise_for_status()
 
-    #with open()
+    with open(file_name, 'wb') as file_:
+        file_.write(r.content)
 
 def get_images(url, dir):
     if not os.path.exists(dir):
@@ -73,17 +77,24 @@ def get_images(url, dir):
 
     soup = BeautifulSoup(r.text, 'lxml')
     img_links = soup.find('td', attrs={'class': 'gallerybody'}).table.find_all('a')
-    x = 1
-    for img_link in img_links:
+    for x, img_link in enumerate(img_links, 1):
+        if not force and glob.glob(os.path.join(dir, '{}.*'.format(x))):
+            continue
+
         url = urljoin(baseurl, img_link['href'])
-        img_src = get_img_src(url)
+        try:
+            img_src = get_img_src(url)
+        except KeyboardInterrupt:
+            raise
+        except:
+            print('Error: ' + img_link['href'])
         if img_src is not None:
             ext = img_src.rsplit('.', 1)[-1]
-            file = os.path.join(dir, str(x) + '.' + ext)
-            save_file(img_src, file)
-            x += 1
+            file_name = os.path.join(dir, str(x) + '.' + ext)
+            save_file(img_src, file_name)
+            print(file_name)
         else:
-            print(img_link)
+            print('Error: ' + img_link['href'])
 
 def test():
     try:
@@ -96,8 +107,15 @@ def main():
                                                     urlgalleries.net.''')
     parser.add_argument('url', metavar='url', type=str,
                         help='The URL from which to download images')
-    parser.add_argument('-o', '--output', dest='output_folder', default='.')
+    parser.add_argument('-o', '--output', dest='output_folder', default='.',
+                        help='The output directory. Default is the current directory')
+    parser.add_argument('-f', '--force', dest='force', action='store_true',
+                        help='Force overwriting image files')
     args = parser.parse_args()
+
+    if args.force:
+        global force
+        force = True
 
     try:
         get_images(args.url, args.output_folder)
@@ -105,5 +123,5 @@ def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    test()
-    #main()
+    #test()
+    main()
