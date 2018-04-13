@@ -6,6 +6,9 @@ All you have to do is specify the URL and the images will be downloaded
 automatically!
 
 Dependencies
+
 requests
+
 bs4 (BeautifulSoup)
+
 parse
