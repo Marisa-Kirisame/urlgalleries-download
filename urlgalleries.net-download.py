@@ -33,7 +33,7 @@ def get_img_src(url):
     r.raise_for_status()
 
     soup = BeautifulSoup(r.text, 'lxml')
-    script = str(soup.body.script.string)
+    script = soup.body.script.string
     img_url = p.search(script)
     if img_url is None:
         return None
@@ -74,19 +74,13 @@ def get_images(url, dir):
     for img_link in img_links:
         url = baseurl.rstrip('/') + '/' + img_link['href'].lstrip('/')
         img_src = get_img_src(url)
+        break
         if img_src is not None:
-            print(img_src)
-            #print('{}: {}'.format(x, img_src))
-            bu = parse_baseurl(img_src)
+            ext = img_src.rsplit('.', 1)[-1]
+            save_file(img_src, dir, '{name}.{ext}'.format(name=x, ext=ext))
             x += 1
-            #save_file(url, dir, '{name}.{ext}'.format(name=x, ext=ext))
         else:
             print(img_link)
-
-text text text
-text text text
-text text text
-text text text
 
 def test():
     try:
