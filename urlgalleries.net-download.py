@@ -3,7 +3,7 @@
 import sys
 import os
 import argparse
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -50,10 +50,13 @@ def get_img_src(url):
         return None
     img_src = img['src']
 
-    return baseurl.rstrip('/') + '/' + img_src.lstrip('/')
+    return urljoin(baseurl, img_src)
 
-def save_file(file_url, dir, file_name):
-    pass
+def save_file(url, file):
+    r = requests.get(url, allow_redirects=True)
+    r.raise_for_status()
+
+    #with open()
 
 def get_images(url, dir):
     if not os.path.exists(dir):
@@ -72,12 +75,12 @@ def get_images(url, dir):
     img_links = soup.find('td', attrs={'class': 'gallerybody'}).table.find_all('a')
     x = 1
     for img_link in img_links:
-        url = baseurl.rstrip('/') + '/' + img_link['href'].lstrip('/')
+        url = urljoin(baseurl, img_link['href'])
         img_src = get_img_src(url)
-        break
         if img_src is not None:
             ext = img_src.rsplit('.', 1)[-1]
-            save_file(img_src, dir, '{name}.{ext}'.format(name=x, ext=ext))
+            file = os.path.join(dir, str(x) + '.' + ext)
+            save_file(img_src, file)
             x += 1
         else:
             print(img_link)
