@@ -110,7 +110,7 @@ def get_images(url, dir):
     if not os.path.exists(dir):
         os.makedirs(dir)
     elif not os.path.isdir(dir):
-        print("The path '{}' you specified is not a directory.".format(dir),
+        print("The path '{}' specified is not a directory.".format(dir),
               file=sys.stderr)
         raise FileExistsError
 
