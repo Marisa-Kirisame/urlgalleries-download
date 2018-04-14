@@ -11,4 +11,6 @@ requests
 
 bs4 (BeautifulSoup)
 
+lxml
+
 parse
