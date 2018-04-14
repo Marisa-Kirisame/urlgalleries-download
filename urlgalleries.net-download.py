@@ -13,6 +13,7 @@ from parse import compile
 force = False
 file_number = None
 
+
 def parse_baseurl_url_query(url_dirty):
     """Return the baseurl, url, and query."""
     parsed_url = urlparse(url_dirty)
@@ -23,10 +24,13 @@ def parse_baseurl_url_query(url_dirty):
     query = parse_qs(parsed_url.query)
     return (baseurl, url, query)
 
+
 def parse_baseurl(url):
     return urlparse(url)._replace(query=None, path='/').geturl()
 
+
 p = compile("linkDestUrl = '{}';\n")
+
 
 def get_img_src1(url):
     _, url_clean, query = parse_baseurl_url_query(url)
@@ -53,7 +57,9 @@ def get_img_src1(url):
 
     return urljoin(baseurl, img_src)
 
+
 p2 = compile("location.href='{}';")
+
 
 def get_img_src2(url):
     _, url_clean, query = parse_baseurl_url_query(url)
@@ -80,6 +86,7 @@ def get_img_src2(url):
 
     return urljoin(baseurl, img_src)
 
+
 def save_file(url, file_name):
     r = requests.get(url, allow_redirects=True)
     r.raise_for_status()
@@ -87,15 +94,14 @@ def save_file(url, file_name):
     with open(file_name, 'wb') as file_:
         file_.write(r.content)
 
+
 def save_from_img_link(baseurl, img_link, file_name_base):
     url = urljoin(baseurl, img_link)
     try:
-        img_src = get_img_src1(url)
-        if img_src is None:
-            img_src = get_img_src2(url)
+        img_src = get_img_src1(url) or get_img_src2(url)
     except KeyboardInterrupt:
         raise
-    except:
+    except BaseException:
         print('Error: ' + url)
         return
     if img_src is not None:
@@ -105,6 +111,7 @@ def save_from_img_link(baseurl, img_link, file_name_base):
         print(file_name)
     else:
         print('Error: ' + url)
+
 
 def get_images(url, dir):
     if not os.path.exists(dir):
@@ -120,7 +127,8 @@ def get_images(url, dir):
     r.raise_for_status()
 
     soup = BeautifulSoup(r.text, 'lxml')
-    img_links = soup.find('td', attrs={'class': 'gallerybody'}).table.find_all('a')
+    img_links = soup.find('td', attrs={'class': 'gallerybody'}).table \
+                    .find_all('a')
     if file_number is not None:
         try:
             img_link = img_links[file_number-1]
@@ -132,11 +140,12 @@ def get_images(url, dir):
         save_from_img_link(baseurl, img_link['href'], file_name_base)
     else:
         for x, img_link in enumerate(img_links, 1):
-            if not force and glob.glob(os.path.join(dir, '{}.*'.format(x))):
+            if not force and glob.glob(os.path.join(dir, str(x) + '.*')):
                 continue
 
             file_name_base = os.path.join(dir, str(x))
             save_from_img_link(baseurl, img_link['href'], file_name_base)
+
 
 def main():
     parser = argparse.ArgumentParser(description='''Download images from
@@ -144,7 +153,8 @@ def main():
     parser.add_argument('url', metavar='url', type=str,
                         help='The URL from which to download images')
     parser.add_argument('-o', '--output', dest='output_folder', default='.',
-                        help='The output directory. Default is the current directory')
+                        help='''The output directory.
+                                Default is the current directory''')
     parser.add_argument('-f', '--force', dest='force', action='store_true',
                         help='Force overwriting image files')
     parser.add_argument('-n', '--number', dest='file_number', type=int,
@@ -162,6 +172,7 @@ def main():
         get_images(args.url, args.output_folder)
     except FileExistsError:
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
